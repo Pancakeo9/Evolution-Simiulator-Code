@@ -1,0 +1,941 @@
+import pygame
+import random
+import time
+
+# initialize Pygame
+pygame.init()
+
+# defining the screen size
+screen_width = 1500
+screen_height = 800
+# creating a variable called screen which is a tuple made up of the screen width and height. This will be used whenever something needs to be rendered on the screen
+screen = pygame.display.set_mode((screen_width, screen_height))
+
+# setting the window name
+pygame.display.set_caption('2D Evolution Simulator')
+
+# defining the RGB value for all the custom colours needed
+green = (60, 170, 93)
+black = (0,0,0)
+white = (255, 255, 255)
+colour = (0, 179, 60)
+sidebarColor = (0, 153, 92)
+mainButtonColor = (0, 179, 179)
+mainButtonLighterColor = (0, 230, 184)
+
+# defining the RGB value for a the light and dark shades of the main menu buttons
+color_light = (170,170,170)
+color_dark = (100,100,100)
+
+# defining the initial width and height values of the test chicken
+objWidth = 10
+objHeight = 10
+
+# defining the initial width and height values of the test predator
+predatorX = 800
+predatorY = 200
+
+# creating a list of all the mid points of the grid squares
+x_coords = (175, 225, 275, 325, 375, 425, 475, 525, 575, 625, 675, 725, 775, 825, 875, 925, 975, 1025, 1075, 1125, 1175, 1225, 1275, 1325, 1375, 1425, 1475)
+y_coords = (25, 75, 125, 175, 225, 275, 325, 375, 425, 475, 525, 575, 625, 675, 725, 775)
+
+# creating an empty list that will be used to store the colours of each individual grid square after the user has pressed generate in the map painter
+gridPixelColours = []
+
+# defining the biome colors
+grassland = (0, 179, 60)
+forest = (0, 102, 0)
+tundra = (208, 227, 230)
+desert = (230, 175, 25)
+ocean = (23, 53, 171)
+swamp = (137, 50, 21)
+
+# setting the initial size of the block that the user paints with
+block_size = 50
+
+# creating a clock object that can be used to control the game's framerate
+clock = pygame.time.Clock()
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# Heading Text
+
+# defining a font for the heading. the 1st parameter is the font file and the 2nd parameter is size of the font
+headingFont = pygame.font.Font('freesansbold.ttf', 90)
+headingFontSmaller = pygame.font.Font('freesansbold.ttf', 50)
+
+# creating a text surface object which the text is drawn on
+headingText = headingFont.render('2D EVOLUTION SIMULATOR', True, white, green)
+objectiveHeadingText = headingFontSmaller.render('Choose an objective for the game', True, white, green)
+
+# creating a rectangle for the text surface object
+headingTextRect = headingText.get_rect()
+headingTextRectSmaller = objectiveHeadingText.get_rect()
+
+# setting the center of the rectangle
+headingTextRect.center = (screen_width // 2, screen_height // 10)
+headingTextRectSmaller.center = (screen_width // 2, screen_height // 17)
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# Information Text
+
+# defining a font for the paragraph
+paragraphFont = pygame.font.Font('freesansbold.ttf', 25)
+
+# creating a text surface object which the text is drawn on
+infoText = paragraphFont.render('Information on how to play the game...', True, white, green)
+
+# creating a rectangle for the text surface object
+infoTextRect = infoText.get_rect()
+
+# setting the center of the rectangle
+infoTextRect.center = (screen_width // 2, screen_height // 5)
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# Text for Buttons
+
+# defining the all the different fonts
+smallfont = pygame.font.SysFont('Corbel',35)
+verySmallfont = pygame.font.SysFont('Corbel',20)
+objectivefont = pygame.font.SysFont('Corbel',28)
+mainButtonfont = pygame.font.SysFont('Corbel',25)
+
+# defining all the different texts that will be needed later
+button1Text = smallfont.render('New Game' , True , (255,255,255))
+button2Text = smallfont.render('Load Game' , True , (255,255,255))
+button3Text = smallfont.render('Instructions' , True , (255,255,255))
+button4Text = smallfont.render('Exit' , True , (255,255,255))
+backButtonText = smallfont.render('Back' , True , (255,255,255))
+painterGrasslandText = verySmallfont.render('Grassland' , True , (255,255,255))
+painterForestText = verySmallfont.render('Forest' , True , (255,255,255))
+painterTundraText = verySmallfont.render('Tundra' , True , (0,0,0))
+painterDesertText = verySmallfont.render('Desert' , True , (0,0,0))
+painterOceanText = verySmallfont.render('Ocean' , True , (255,255,255))
+painterSwampText = verySmallfont.render('Swamp' , True , (255,255,255))
+painterGenerateText = verySmallfont.render('Generate' , True , (255,255,255))
+painterClearText = verySmallfont.render('Clear' , True , (0,0,0))
+painterPresetText = verySmallfont.render('Preset' , True , (255,255,255))
+painterSizeUpText = verySmallfont.render('Bigger' , True , (255,255,255))
+painterSizeDownText = verySmallfont.render('Smaller' , True , (255,255,255))
+objectiveButton1Text = objectivefont.render('Freeplay (no objective)' , True , (255,255,255))
+objectiveButton2Text = objectivefont.render('Complete all the tasks' , True , (255,255,255))
+objectiveButton3Text = objectivefont.render('Time challenge' , True , (255,255,255))
+continueText = smallfont.render('Continue' , True , (255,255,255))
+xpBarText = mainButtonfont.render('XP' , True , (255,255,255))
+mainButton1Text = mainButtonfont.render('Tasks' , True , (255,255,255))
+mainButton2Text = mainButtonfont.render('Animals' , True , (255,255,255))
+mainButton3Text = mainButtonfont.render('Plants' , True , (255,255,255))
+mainButton4Text = mainButtonfont.render('Options' , True , (255,255,255))
+mainButton5Text = mainButtonfont.render('Quit' , True , (255,255,255))
+gameBackText = verySmallfont.render('Back' , True , (255,255,255))
+popupButton1Text = mainButtonfont.render('Chicken' , True , (255,255,255))
+oceanAlertText = mainButtonfont.render('Chicken cannot be spawned over ocean biomes' , True , (255,0,0))
+
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# creating a function that will fill all the objective boxes green
+
+def fillAllBoxes():
+    # drawing the first box
+    pygame.draw.rect(screen, (92, 121, 83),[550, 170, 30, 30])
+    # drawing the border for the first box
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(550-5, 170-5, 40, 40), 5)
+    
+    # drawing the second box
+    pygame.draw.rect(screen, (92, 121, 83),[550, 250, 30, 30])
+    # drawing the border for the second box
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(550-5, 250-5, 40, 40), 5)
+    
+    # drawing the third box
+    pygame.draw.rect(screen, (92, 121, 83),[550, 330, 30, 30])
+    # drawing the border for the third box
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(550-5, 330-5, 40, 40), 5)
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# creating a function to draw the sidebar
+
+def drawSidebar():
+    # drawing a rectangle for the sidebar
+    pygame.draw.rect(screen, sidebarColor,[0, 0, 145, 800])
+    # drawing the border for the sidebar
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, 0, 150, 800), 5)
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# creating a function to draw the XP bar
+
+def drawXPbar():
+    # drawing the rectangle
+    pygame.draw.rect(screen, (0, 102, 153),[20, 20, 110, 40])
+    # drawing the border
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(20-5, 20-5, 110+10, 40+10), 5)
+    # rendering the text in the center of the rectangle
+    screen.blit(xpBarText, (20+45, 20+10))
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+def drawBackButton():
+    # drawing the rectangle for the button
+    pygame.draw.rect(screen, (153, 102, 51),[20, 750, 100, 30])
+    # drawing the border for the button
+    pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 745, 110, 40), 5)
+    # rendering the text in the center of the button
+    screen.blit(gameBackText, (20+31, 750+6))
+    
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# creating a function that will draw the user's custom terrain
+
+# this function works by iterating over each grid square and drawing a square with the corresponding colour from the "gridPixelColours" list
+# the itteration works by using two for loops, one for the each x position and another nested inside of the the first one for each y position
+# the variable "c" is used to keep track of which colour should be drawn. It is set to 0 initially and is incremented by 1 each time a square is drawn
+# the x for loop itterates from 1 to 28 as there are 27 grid squares in each row. Each time the x loop goes round the x variable is incremented by a factor of 50 as that is the length of each grid square
+# the y for loop itterates from 0 to 16 as there are 16 grid squares in each column. Each time the y loop goes rounf the y variable is incremented by a factor of 50 as that is the height of each grid square
+
+def drawTerrain():
+    c = 0
+    for x in range(1, 28):
+        x = x * 50
+        for y in range(0, 16):
+            y = y * 50
+            pygame.draw.rect(screen, gridPixelColours[c], pygame.Rect(100+x, 0+y, 50, 50))
+            c = c + 1
+            
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# creating a function that will draw the terrain around the chicken
+
+# this function works in exactly the same way as the previous one, however it only draws the terrain that is close around the chicken so that the whole screen doesn't have to be redrawn everytime the chicken moves
+# the if statement takes the current position of the center of the chicken and minuses the co-ordinate of the current itteration. If this value is between 200 and -50 then it draws the square
+
+def chickenDrawTerrain():
+    c = 0
+    for x in range(1, 28):
+        x = x * 50
+        for y in range(0, 16):
+            y = y * 50
+            if (objX - x <= 170 and objX - x >= -20) and (objY - y <= 70 and objY - y >= -20):
+                pygame.draw.rect(screen, gridPixelColours[c], pygame.Rect(100+x, 0+y, 50, 50))
+            c = c + 1
+            
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# creating a function that will draw the terrain around the predator
+
+# this function is the exact same as the "chickenDrawTerrain" function but it uses the predator co-ordinates
+
+def predatorDrawTerrain():
+    c = 0
+    for x in range(1, 28):
+        x = x * 50
+        for y in range(0, 16):
+            y = y * 50
+            if (predatorX - x <= 170 and predatorX - x >= -20) and (predatorY - y <= 70 and predatorY - y >= -20):
+                pygame.draw.rect(screen, gridPixelColours[c], pygame.Rect(100+x, 0+y, 50, 50))
+            c = c + 1
+            
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+            
+def placerDrawTerrain():
+    c = 0
+    for x in range(1, 28):
+        x = x * 50
+        for y in range(0, 16):
+            y = y * 50
+            if (mouse[0] - x <= 300 and mouse[0] - x >= -50) and (mouse[1] - y <= 100 and mouse[1] - y >= -100):
+                pygame.draw.rect(screen, gridPixelColours[c], pygame.Rect(100+x, 0+y, 50, 50))
+            c = c + 1
+            
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# setting all the boolean variables to their initial state 
+mouse_down = False
+menuActive = True
+painterActive = False
+objectivesActive = False
+mainGameActive = False
+mainButtons = True
+hoveringOverButton = False
+last_colour = None
+animalButtonsActive = False
+generateChicken = False
+placerActive = False
+overSidebar = False
+overOcean = False
+oceanAlert = False
+infoActive = False
+foodTestActive = False
+canSeeFood = False
+predatorTestActive = False
+canSeePrey = False
+
+# filling the screen green
+screen.fill(green)
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Main game loop
+running = True
+
+# creating a while loop that will run until the quit button is pressed and the "running" value is set to false
+while running:
+    
+    # setting the framerate of the game to 60
+    clock.tick(60)
+    
+    # setting this variable to false by default
+    hoveringOverButton = False
+    
+    # defining the texts that are being changed later in the code as they need to be set to white colour as default
+    painterTundraText = verySmallfont.render('Tundra' , True , white)
+    painterDesertText = verySmallfont.render('Desert' , True , white)
+    painterGenerateText = verySmallfont.render('Generate' , True , white)
+    painterClearText = verySmallfont.render('Clear' , True , white)
+    
+    if menuActive == True:
+        # rendering the heading text on the screen
+        screen.blit(headingText, headingTextRect)
+    
+    # detecting if any input (such as a mouse press) has been given by the user
+    for event in pygame.event.get():
+        
+        # detecting if the window has been quit and setting the "running" variable to false which will cause the main game loop to stop
+        if event.type == pygame.QUIT:
+            running = False
+            
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            mouse_down = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                mouse_down = True
+                if screen_width/13 <= mouse[0] <= screen_width/13+250 and screen_height/3.5 <= mouse[1] <= screen_height/3.5+60:
+                    if menuActive == True:
+                        if menuActive == True:
+                            print("New Game Pressed")
+                        infoActive = False
+                        menuActive = False
+                        painterActive = True
+                        screen.fill(grassland)
+                elif screen_width/13 <= mouse[0] <= screen_width/13+250 and screen_height/2.4 <= mouse[1] <= screen_height/2.4+60:
+                    if menuActive == True:
+                        print("Load Game Pressed")
+                elif screen_width/13 <= mouse[0] <= screen_width/13+250 and screen_height/1.82 <= mouse[1] <= screen_height/1.82+60:
+                    if menuActive == True:
+                        print("Info Pressed")
+                        menuActive = False
+                        infoActive = True
+                        screen.fill(green)
+                        screen.blit(infoText, infoTextRect)
+                elif screen_width/1.21 <= mouse[0] <= screen_width/1.21+250 and screen_height/1.1 <= mouse[1] <= screen_height/1.1+60:
+                    if menuActive == False and painterActive == False:
+                        print("Back Button Pressed")
+                        screen.fill(green)
+                        menuActive = True
+                elif screen_width/13 <= mouse[0] <= screen_width/13+250 and screen_height/1.46 <= mouse[1] <= screen_height/1.46+60:
+                    if menuActive == True:
+                        print("Exit Pressed")
+                        running = False
+                if menuActive == False and painterActive == True:
+                    if 20 <= mouse[0] <= 20+100 and 20 <= mouse[1] <= 20+30:
+                        print("Grassland Pressed")
+                        colour = grassland
+                    elif 20 <= mouse[0] <= 20+100 and 67 <= mouse[1] <= 67+30:
+                        print("Forest Pressed")
+                        colour = forest
+                    elif 20 <= mouse[0] <= 20+100 and 114 <= mouse[1] <= 114+30:
+                        print("Tundra Pressed")
+                        colour = tundra
+                    elif 20 <= mouse[0] <= 20+100 and 161 <= mouse[1] <= 161+30:
+                        print("Desert Pressed")
+                        colour = desert
+                    elif 20 <= mouse[0] <= 20+100 and 208 <= mouse[1] <= 208+30:
+                        print("Ocean Pressed")
+                        colour = ocean
+                    elif 20 <= mouse[0] <= 20+100 and 255 <= mouse[1] <= 255+30:
+                        print("Swamp Pressed")
+                        colour = swamp
+                    elif 20 <= mouse[0] <= 20+100 and 750 <= mouse[1] <= 750+30:
+                        print("Generate Pressed")
+                        for i in range(1, 28):
+                            i = i * 50
+                            for x in range(0, 16):
+                                x = x * 50
+                                pixelColor = screen.get_at((100+i+25, x+25))
+                                gridPixelColours.append(pixelColor)
+                        painterActive = False
+                        objectivesActive = True
+                        pygame.image.save(screen, "screenshot.jpeg")
+                        screen.fill(green)
+                        fillAllBoxes()
+                    elif 20 <= mouse[0] <= 20+100 and 700 <= mouse[1] <= 700+30:
+                        print("Clear Pressed")
+                        screen.fill(grassland)
+                        gridColor = (50, 50, 50)
+                        for i in range(1, 28):
+                            i = i * 50
+                            for x in range(0, 16):
+                                x = x * 50
+                                pygame.draw.rect(screen, gridColor, pygame.Rect(100+i, 0+x, 50, 50), 1)
+                    elif 20 <= mouse[0] <= 20+100 and 400 <= mouse[1] <= 400+30:
+                        print("Preset Pressed")
+                        screen.fill(grassland)
+                        c = 0
+                        
+                        presetFile = open('preset.txt', 'r')
+                        Lines = presetFile.readlines()
+                        presetLines = []
+                        for line in Lines:
+                            presetLines.append(line.strip())
+                            
+                        for i in range(1, 28):
+                            i = i * 50
+                            for x in range(0, 16):
+                                x = x * 50
+                                if presetLines[c] == "(0, 179, 60, 255)":
+                                    newColour = grassland
+                                elif presetLines[c] == "(0, 102, 0, 255)":
+                                    newColour = forest
+                                elif presetLines[c] == "(208, 227, 230, 255)":
+                                    newColour = tundra
+                                elif presetLines[c] == "(230, 175, 25, 255)":
+                                    newColour = desert
+                                elif presetLines[c] == "(23, 53, 171, 255)":
+                                    newColour = ocean
+                                elif presetLines[c] == "(137, 50, 21, 255)":
+                                    newColour = swamp
+                                    
+                                pygame.draw.rect(screen, newColour, [100+i, 0+x, 50, 50])
+                                c = c + 1
+                        
+                        for i in range(1, 28):
+                            i = i * 50
+                            for x in range(0, 16):
+                                x = x * 50
+                                pygame.draw.rect(screen, gridColor, pygame.Rect(100+i, 0+x, 50, 50), 1)
+                                
+                    elif 20 <= mouse[0] <= 20+100 and 500 <= mouse[1] <= 500+30:
+                        print("Bigger Pressed")
+                        if block_size < 200:
+                            block_size = block_size + 50
+                        print("Block Size:" + str(block_size))
+                    elif 20 <= mouse[0] <= 20+100 and 550 <= mouse[1] <= 550+30:
+                        print("Smaller Pressed")
+                        if block_size > 50:
+                            block_size = block_size - 50
+                        print("Block Size:" + str(block_size))
+                elif 550 <= mouse[0] <= 550+30 and 170 <= mouse[1] <= 170+30:
+                    if menuActive == False and objectivesActive == True:
+                        print("Objective 1 Pressed")
+                        fillAllBoxes()
+                        pygame.draw.line(screen, (0, 0, 0), (550+5, 170+5), (550+23, 170+23), 2)
+                        pygame.draw.line(screen, (0, 0, 0), (550+5, 170+23), (550+23, 170+5), 2)
+                elif 550 <= mouse[0] <= 550+30 and 250 <= mouse[1] <= 250+30:
+                    if menuActive == False and objectivesActive == True:
+                        print("Objective 2 Pressed")
+                        fillAllBoxes()
+                        pygame.draw.line(screen, (0, 0, 0), (550+5, 250+5), (550+23, 250+23), 2)
+                        pygame.draw.line(screen, (0, 0, 0), (550+5, 250+23), (550+23, 250+5), 2)
+                elif 550 <= mouse[0] <= 550+30 and 330 <= mouse[1] <= 330+30:
+                    if menuActive == False and objectivesActive == True:
+                        print("Objective 3 Pressed")
+                        fillAllBoxes()
+                        pygame.draw.line(screen, (0, 0, 0), (550+5, 330+5), (550+23, 330+23), 2)
+                        pygame.draw.line(screen, (0, 0, 0), (550+5, 330+23), (550+23, 330+5), 2)
+                elif 630 <= mouse[0] <= 630+200 and 620 <= mouse[1] <= 620+50:
+                    if menuActive == False and objectivesActive == True:
+                        print("Continue Pressed")
+                        objectivesActive = False
+                        mainGameActive = True
+                        screen.fill(green)
+                        drawTerrain()
+                        drawSidebar()
+                        
+                elif 20 <= mouse[0] <= 20+110 and 200 <= mouse[1] <= 200+40:
+                    if animalButtonsActive == False and mainGameActive == True:
+                        print("Tasks Pressed")
+                        mainButtons = False
+                        drawSidebar()
+                        drawXPbar()
+                        drawBackButton()
+                    elif animalButtonsActive == True and mainGameActive == True:
+                        print("Chicken Pressed")
+                        placerActive = True
+                        foodTestActive = True
+                        predatorTestActive = True
+                elif 20 <= mouse[0] <= 20+110 and 280 <= mouse[1] <= 280+40:
+                    if animalButtonsActive == False and mainGameActive == True:
+                        print("Animals Pressed")
+                        mainButtons = False
+                        animalButtonsActive = True
+                        drawSidebar()
+                        drawXPbar()
+                        drawBackButton()
+                elif 20 <= mouse[0] <= 20+110 and 360 <= mouse[1] <= 360+40:
+                    if animalButtonsActive == False and mainGameActive == True:
+                        print("Plants Pressed")
+                        mainButtons = False
+                        drawSidebar()
+                        drawXPbar()
+                        drawBackButton()
+                elif 20 <= mouse[0] <= 20+110 and 440 <= mouse[1] <= 440+40:
+                    if animalButtonsActive == False and mainGameActive == True:
+                        print("Options Pressed")
+                        mainButtons = False
+                        drawSidebar()
+                        drawXPbar()
+                        drawBackButton()
+                elif 20 <= mouse[0] <= 20+100 and 750 <= mouse[1] <= 750+30:
+                    if mainButtons == False and mainGameActive == True:
+                        print("Back Pressed")
+                        animalButtonsActive = False
+                        mainButtons = True
+                        pygame.draw.rect(screen, sidebarColor, pygame.Rect(15, 745, 110, 40))
+                                
+                        
+    # storing the (x,y) coordinates of the mouse as a tuple
+    mouse = pygame.mouse.get_pos()
+    if menuActive == True:  
+        # if mouse is hovered on over button change it to a lighter shade 
+        if screen_width/13 <= mouse[0] <= screen_width/13+250 and screen_height/3.5 <= mouse[1] <= screen_height/3.5+60:
+            pygame.draw.rect(screen, color_light,[screen_width/13,screen_height/3.5,250,60])
+            screen.blit(button1Text, (screen_width/13+50,screen_height/3.3))
+        elif screen_width/13 <= mouse[0] <= screen_width/13+250 and screen_height/2.4 <= mouse[1] <= screen_height/2.4+60:
+            pygame.draw.rect(screen, color_light,[screen_width/13,screen_height/2.4,250,60])
+            screen.blit(button2Text, (screen_width/13+50,screen_height/2.3))
+        elif screen_width/13 <= mouse[0] <= screen_width/13+250 and screen_height/1.82 <= mouse[1] <= screen_height/1.82+60:
+            pygame.draw.rect(screen, color_light,[screen_width/13,screen_height/1.82,250,60])
+            screen.blit(button3Text, (screen_width/13+50,screen_height/1.77))
+        elif screen_width/13 <= mouse[0] <= screen_width/13+250 and screen_height/1.46 <= mouse[1] <= screen_height/1.46+60:
+            pygame.draw.rect(screen, color_light,[screen_width/13,screen_height/1.46,250,60])
+            screen.blit(button4Text, (screen_width/9+50,screen_height/1.425))
+        # if not then keep darker shade
+        # 1st rect is for the border
+        # 2nd rect is for the fill
+        else:
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(110, 223, 260, 70), 5)
+            pygame.draw.rect(screen, color_dark,[screen_width/13,screen_height/3.5,250,60])
+            screen.blit(button1Text, (screen_width/13+50,screen_height/3.3))
+            
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(110, 328, 260, 70), 5)
+            pygame.draw.rect(screen, color_dark,[screen_width/13,screen_height/2.4,250,60])
+            screen.blit(button2Text, (screen_width/13+50,screen_height/2.3))
+            
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(110, 434, 260, 70), 5)
+            pygame.draw.rect(screen, color_dark,[screen_width/13,screen_height/1.82,250,60])
+            screen.blit(button3Text, (screen_width/13+50,screen_height/1.77))
+            
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(110, 542, 260, 70), 5)
+            pygame.draw.rect(screen, color_dark,[screen_width/13,screen_height/1.46,250,60])
+            screen.blit(button4Text, (screen_width/9+50,screen_height/1.425))
+    
+    # back button
+    elif infoActive == True:
+        mouse = pygame.mouse.get_pos()
+        if screen_width/1.21 <= mouse[0] <= screen_width/1.21+250 and screen_height/1.1 <= mouse[1] <= screen_height/1.1+60:
+            pygame.draw.rect(screen, color_light,[screen_width/1.21,screen_height/1.1,250,60])
+        else:
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(1234, 722, 260, 70), 5)
+            pygame.draw.rect(screen, color_dark,[screen_width/1.21,screen_height/1.1,250,60])
+        screen.blit(backButtonText, (1335,screen_height/1.081))
+        
+    elif menuActive == False and painterActive == True:
+        pygame.draw.rect(screen, sidebarColor,[0, 0, 145, 800])
+        pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(0, 0, 150, 800), 5)
+    
+        if 20 <= mouse[0] <= 20+100 and 20 <= mouse[1] <= 20+30:
+            hoveringOverButton = True
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 15, 110, 40), 5)
+            pygame.draw.rect(screen, grassland,[20, 20, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 67 <= mouse[1] <= 67+30:
+            hoveringOverButton = True
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 62, 110, 40), 5)
+            pygame.draw.rect(screen, forest,[20, 67, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 114 <= mouse[1] <= 114+30:
+            hoveringOverButton = True
+            painterTundraText = verySmallfont.render('Tundra' , True , black)
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 109, 110, 40), 5)
+            pygame.draw.rect(screen, tundra,[20, 114, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 161 <= mouse[1] <= 161+30:
+            hoveringOverButton = True
+            painterDesertText = verySmallfont.render('Desert' , True , black)
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 156, 110, 40), 5)
+            pygame.draw.rect(screen, desert,[20, 161, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 208 <= mouse[1] <= 208+30:
+            hoveringOverButton = True
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 203, 110, 40), 5)
+            pygame.draw.rect(screen, ocean,[20, 208, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 255 <= mouse[1] <= 255+30:
+            hoveringOverButton = True
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 250, 110, 40), 5)
+            pygame.draw.rect(screen, swamp,[20, 255, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 750 <= mouse[1] <= 750+30:
+            hoveringOverButton = True
+            painterGenerateText = verySmallfont.render('Generate' , True , black)
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 745, 110, 40), 5)
+            pygame.draw.rect(screen, (0, 230, 138),[20, 750, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 700 <= mouse[1] <= 700+30:
+            hoveringOverButton = True
+            painterClearText = verySmallfont.render('Clear' , True , black)
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 695, 110, 40), 5)
+            pygame.draw.rect(screen, (209, 224, 224),[20, 700, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 400 <= mouse[1] <= 400+30:
+            hoveringOverButton = True
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 400-5, 110, 40), 5)
+            pygame.draw.rect(screen, (51, 102, 0),[20, 400, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 550 <= mouse[1] <= 550+30:
+            hoveringOverButton = True
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 545, 110, 40), 5)
+            pygame.draw.rect(screen, (62, 91, 91),[20, 550, 100, 30])
+        elif 20 <= mouse[0] <= 20+100 and 500 <= mouse[1] <= 500+30:
+            hoveringOverButton = True
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 495, 110, 40), 5)
+            pygame.draw.rect(screen, (92, 121, 83),[20, 500, 100, 30])
+            
+        elif 0 <= mouse[0] <= 0+140 and 0 <= mouse[1] <= 0+800:
+            hoveringOverButton = True
+        
+        else:
+            gridColor = (51, 51, 51)
+            for i in range(1, 28):
+                i = i * 50
+                for x in range(0, 16):
+                    x = x * 50
+                    pygame.draw.rect(screen, gridColor, pygame.Rect(100+i, 0+x, 50, 50), 1)
+            
+        screen.blit(painterGrasslandText, (20+9, 20+6))
+        screen.blit(painterForestText, (20+25, 67+6))
+        screen.blit(painterTundraText, (20+23, 114+6))
+        screen.blit(painterDesertText, (20+23, 161+6))
+        screen.blit(painterOceanText, (20+23, 208+6))
+        screen.blit(painterSwampText, (20+20, 255+6))
+        screen.blit(painterGenerateText, (20+13, 750+6))
+        screen.blit(painterClearText, (20+28, 700+6))
+        screen.blit(painterPresetText, (20+25, 400+6))
+        screen.blit(painterSizeUpText, (20+25, 500+6))
+        screen.blit(painterSizeDownText, (20+22, 550+6))
+    
+        if mouse_down and hoveringOverButton == False:
+            mouse_pos = pygame.mouse.get_pos()
+            closestX = min(x_coords, key=lambda x: abs(x-mouse_pos[0]))
+            closestY = min(y_coords, key=lambda y: abs(y-mouse_pos[1]))
+            pygame.draw.rect(screen, colour, pygame.Rect(closestX-25, closestY-25, block_size, block_size))
+        
+    if painterActive == True or (mainGameActive == True and mainButtons == True):
+        if event.type == pygame.MOUSEBUTTONDOWN and hoveringOverButton == False:
+            cursorColour = screen.get_at(pygame.mouse.get_pos())
+            if event.button == 2:
+                if last_colour != cursorColour:
+                    if cursorColour == (0, 179, 60, 255):
+                        printColour = "Grassland"
+                        colour = grassland
+                    elif cursorColour == (0, 102, 0, 255):
+                        printColour = "Forest"
+                        colour = forest
+                    elif cursorColour == (208, 227, 230, 255):
+                        printColour = "Tundra"
+                        colour = tundra
+                    elif cursorColour == (230, 175, 25, 255):
+                        printColour = "Desert"
+                        colour = desert
+                    elif cursorColour == (23, 53, 171, 255):
+                        printColour = "Ocean"
+                        colour = ocean
+                    elif cursorColour == (137, 50, 21, 255):
+                        printColour = "Swamp"
+                        colour = swamp
+                    print("Current colour mouse over = " + printColour)
+                    last_colour = cursorColour
+                    
+    if objectivesActive == True:
+        screen.blit(objectiveHeadingText, headingTextRectSmaller)
+
+        screen.blit(objectiveButton1Text, (550+60, 170+2))
+        
+        screen.blit(objectiveButton2Text, (550+60, 250+2))
+
+        screen.blit(objectiveButton3Text, (550+60, 330+2))
+        
+        mouse = pygame.mouse.get_pos()
+        if 630 <= mouse[0] <= 630+200 and 620 <= mouse[1] <= 620+50:
+            pygame.draw.rect(screen, (0, 190, 64),[630, 620, 200, 50])
+        
+        else:
+            pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(630-5, 620-5, 200+10, 50+10), 5)
+            pygame.draw.rect(screen, (0, 153, 51),[630, 620, 200, 50])
+        
+        screen.blit(continueText, (630+38, 620+8))
+        
+    if mainGameActive == True:
+        if mainButtons == True:
+            if 20 <= mouse[0] <= 20+110 and 200 <= mouse[1] <= 200+40:
+                    pygame.draw.rect(screen, mainButtonLighterColor,[20, 200, 110, 40])
+                    screen.blit(mainButton1Text, (20+27, 200+9))
+            elif 20 <= mouse[0] <= 20+110 and 280 <= mouse[1] <= 280+40:
+                    pygame.draw.rect(screen, mainButtonLighterColor,[20, 280, 110, 40])
+                    screen.blit(mainButton2Text, (20+15, 280+9))
+            elif 20 <= mouse[0] <= 20+110 and 360 <= mouse[1] <= 360+40:
+                    pygame.draw.rect(screen, mainButtonLighterColor,[20, 360, 110, 40])
+                    screen.blit(mainButton3Text, (20+24, 360+9))
+            elif 20 <= mouse[0] <= 20+110 and 440 <= mouse[1] <= 440+40:
+                    pygame.draw.rect(screen, mainButtonLighterColor,[20, 440, 110, 40])
+                    screen.blit(mainButton4Text, (20+15, 440+9))
+            
+            else:
+                drawXPbar()
+                
+                pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(20-5, 200-5, 110+10, 40+10), 5)
+                pygame.draw.rect(screen, mainButtonColor,[20, 200, 110, 40])
+                screen.blit(mainButton1Text, (20+27, 200+9))
+            
+                pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(20-5, 280-5, 110+10, 40+10), 5)
+                pygame.draw.rect(screen, mainButtonColor,[20, 280, 110, 40])
+                screen.blit(mainButton2Text, (20+15, 280+9))
+            
+                pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(20-5, 360-5, 110+10, 40+10), 5)
+                pygame.draw.rect(screen, mainButtonColor,[20, 360, 110, 40])
+                screen.blit(mainButton3Text, (20+24, 360+9))
+            
+                pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(20-5, 440-5, 110+10, 40+10), 5)
+                pygame.draw.rect(screen, mainButtonColor,[20, 440, 110, 40])
+                screen.blit(mainButton4Text, (20+15, 440+9))
+                
+        if animalButtonsActive == True:
+            mouse = pygame.mouse.get_pos()
+            
+            if 20 <= mouse[0] <= 20+100 and 750 <= mouse[1] <= 750+30:
+                pygame.draw.rect(screen, (198, 140, 83),[20, 750, 100, 30])
+            elif 20 <= mouse[0] <= 20+110 and 200 <= mouse[1] <= 200+40:
+                pygame.draw.rect(screen, mainButtonLighterColor,[20, 200, 110, 40])
+                
+            else:
+                pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(15, 745, 110, 40), 5)
+                pygame.draw.rect(screen, (153, 102, 51),[20, 750, 100, 30])
+                
+                pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(20-5, 200-5, 110+10, 40+10), 5)
+                pygame.draw.rect(screen, mainButtonColor,[20, 200, 110, 40])
+            
+            screen.blit(popupButton1Text, (20+15, 200+9))
+            screen.blit(gameBackText, (20+31, 750+6))
+            
+            if placerActive == True:
+                overSidebar = False
+                overOcean = False
+                mouse = pygame.mouse.get_pos()
+                biomeOver = screen.get_at(pygame.mouse.get_pos())
+                if 0 <= mouse[0] <= 0+160 and 0 <= mouse[1] <= 0+800:
+                    overSidebar = True
+                    
+                if biomeOver == (23, 53, 171, 255):
+                    overOcean = True
+
+                if overSidebar == False:
+                    if overOcean == True and mouse_down == True:
+                        placerDrawTerrain()
+                    else:
+                        placerDrawTerrain()
+                        
+                    pygame.draw.circle(screen, (102, 153, 153), (mouse[0], mouse[1]), 10, 8)
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if overOcean == False:
+                            placerDrawTerrain()
+                            selectedBiome = screen.get_at(pygame.mouse.get_pos())
+                            objX = mouse[0]
+                            objY = mouse[1]
+                            placerActive = False
+                            generateChicken = True
+                        elif overOcean == True:
+                            screen.blit(oceanAlertText, (450, 100))
+            
+            if foodTestActive == True:
+                foodX = 500
+                foodY = 100
+                pygame.draw.rect(screen, (0, 255, 0),[foodX, foodY, 10, 10])
+            
+            moveProbability = random.randint(10, 40)
+        
+            if predatorTestActive == True:
+                if moveProbability == 10:
+                    randNum = random.randint(0, 10000)
+                    vel = 5
+                    offset = vel + 10
+                    sightPositive = 150
+                    sightNegative = -150
+                    
+                    if generateChicken == True:
+                        if (objX - predatorX <= sightPositive and objX - predatorX >= sightNegative) and (objY - predatorY <= sightPositive and objY - predatorY >= sightNegative):
+                            canSeePrey = True
+                        else:
+                            canSeePrey = False
+                    
+                    if canSeePrey == False:
+                        if randNum < 2500 and predatorX>160+offset:
+                            predatorX -= vel
+                            predatorDrawTerrain()
+                            pygame.draw.circle(screen, (153, 0, 51), (predatorX, predatorY), 10, 10)
+                            pygame.draw.circle(screen, (0, 0, 0), (predatorX, predatorY), 10+2, 4)
+                                
+                        elif randNum < 5000 and predatorX<1490-offset:
+                            predatorX += vel
+                            predatorDrawTerrain()
+                            pygame.draw.circle(screen, (153, 0, 51), (predatorX, predatorY), 10, 10)
+                            pygame.draw.circle(screen, (0, 0, 0), (predatorX, predatorY), 10+2, 4)
+                                
+                        elif randNum < 7500 and predatorY>10+offset:
+                            predatorY -= vel
+                            predatorDrawTerrain()
+                            pygame.draw.circle(screen, (153, 0, 51), (predatorX, predatorY), 10, 10)
+                            pygame.draw.circle(screen, (0, 0, 0), (predatorX, predatorY), 10+2, 4)
+
+                        elif randNum > 7500 and predatorY<790-offset:
+                            predatorY += vel
+                            predatorDrawTerrain()
+                            pygame.draw.circle(screen, (153, 0, 51), (predatorX, predatorY), 10, 10)
+                            pygame.draw.circle(screen, (0, 0, 0), (predatorX, predatorY), 10+2, 4)
+                            
+                    if canSeePrey == True:
+                        if objX > predatorX and predatorX>160+offset:
+                            predatorX += vel
+                            predatorDrawTerrain()
+                            pygame.draw.circle(screen, (153, 0, 51), (predatorX, predatorY), 10, 10)
+                            pygame.draw.circle(screen, (0, 0, 0), (predatorX, predatorY), 10+2, 4)
+                                
+                        elif objX < predatorX and predatorX<1490-offset:
+                            predatorX -= vel
+                            predatorDrawTerrain()
+                            pygame.draw.circle(screen, (153, 0, 51), (predatorX, predatorY), 10, 10)
+                            pygame.draw.circle(screen, (0, 0, 0), (predatorX, predatorY), 10+2, 4)
+                                
+                        if objY > predatorY and predatorY>10+offset:
+                            predatorY += vel
+                            predatorDrawTerrain()
+                            pygame.draw.circle(screen, (153, 0, 51), (predatorX, predatorY), 10, 10)
+                            pygame.draw.circle(screen, (0, 0, 0), (predatorX, predatorY), 10+2, 4)
+
+                        elif objY < predatorY and predatorY<790-offset:
+                            predatorY -= vel
+                            predatorDrawTerrain()
+                            pygame.draw.circle(screen, (153, 0, 51), (predatorX, predatorY), 10, 10)
+                            pygame.draw.circle(screen, (0, 0, 0), (predatorX, predatorY), 10+2, 4)
+                                
+            
+            if generateChicken == True:
+                if moveProbability == 11:
+                    randNum = random.randint(0, 10000)
+                    radius = 10
+                    vel = 5
+                    offset = vel + 10
+                    sightPositive = 150
+                    sightNegative = -150
+                    
+                    topX = objX
+                    topY = objY+int(offset)
+                    leftX = objX-int(offset)
+                    leftY = objY
+                    bottomX = objX
+                    bottomY = objY-int(offset)
+                    rightX = objX-int(offset)
+                    rightY = objY
+                    
+                    topRightX = objX+int(offset)
+                    topRightY = objY+int(offset)
+                    bottomRightX = objX+int(offset)
+                    bottomRightY = objY-int(offset)
+                    topLeftX = objX-int(offset)
+                    topLeftY = objY+int(offset)
+                    bottomLeftX = objX-int(offset)
+                    bottomLeftY = objY-int(offset)
+                    
+                    topColour = screen.get_at((int(topX), int(topY)))
+                    leftColour = screen.get_at((int(leftX), int(leftY)))
+                    bottomColour = screen.get_at((int(bottomX), int(bottomY)))
+                    rightColour = screen.get_at((int(rightX), int(rightY)))
+                    
+                    topRight = screen.get_at((int(topRightX), int(topRightY)))
+                    bottomRight = screen.get_at((int(bottomRightX), int(bottomRightY)))
+                    topLeft = screen.get_at((int(topLeftX), int(topLeftY)))
+                    bottomLeft = screen.get_at((int(bottomLeftX), int(bottomLeftY)))
+                    
+                    
+                    if (objX - foodX <= sightPositive and objX - foodX >= sightNegative) and (objY - foodY <= sightPositive and objY - foodY >= sightNegative):
+                        canSeeFood = True
+                    else:
+                        canSeeFood = False
+                        
+                    if (objX - predatorX <= sightPositive and objX - predatorX >= sightNegative) and (objY - predatorY <= sightPositive and objY - predatorY >= sightNegative):
+                        canSeePredator = True
+                    else:
+                        canSeePredator = False
+                    
+                    if canSeeFood == False and canSeePredator == False:
+                        if randNum < 2500 and objX>160+offset and (leftColour == selectedBiome and topLeft == selectedBiome and bottomLeft == selectedBiome):
+                            objX -= vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                                
+                        elif randNum < 5000 and objX<1490-offset and (rightColour == selectedBiome and topRight == selectedBiome and bottomRight == selectedBiome):
+                            objX += vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                                
+                        elif randNum < 7500 and objY>10+offset and (bottomColour == selectedBiome and bottomLeft == selectedBiome and bottomRight == selectedBiome):
+                            objY -= vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+
+                        elif randNum > 7500 and objY<790-offset and (topColour == selectedBiome and topLeft == selectedBiome and topRight == selectedBiome):
+                            objY += vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                        
+                    elif canSeePredator == True:
+                        if predatorX > objX and objX<1490-offset:
+                            objX -= vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                        elif predatorX < objX and objX>160+offset:
+                            objX += vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                        
+                        if predatorY > objY and objY<790-offset:
+                            objY -= vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                        elif predatorY < objY and objY>10+offset:
+                            objY += vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                    
+                    elif canSeeFood == True:
+                        if foodX > objX and objX<1490-offset and (rightColour == selectedBiome and topRight == selectedBiome and bottomRight == selectedBiome):
+                            objX += vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                        elif foodX < objX and objX>160+offset and (leftColour == selectedBiome and topLeft == selectedBiome and bottomLeft == selectedBiome):
+                            objX -= vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                        
+                        if foodY > objY and objY<790-offset and (topColour == selectedBiome and topLeft == selectedBiome and topRight == selectedBiome):
+                            objY += vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+                        elif foodY < objY and objY>10+offset and (bottomColour == selectedBiome and bottomLeft == selectedBiome and bottomRight == selectedBiome):
+                            objY -= vel
+                            chickenDrawTerrain()
+                            pygame.draw.circle(screen, (255, 0, 0), (objX, objY), objWidth, radius)
+                            pygame.draw.circle(screen, (0, 0, 0), (objX, objY), objWidth+2, 4)
+
+    # Updates the screen
+    pygame.display.flip()
+                
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Exit Pygame
+pygame.quit()
